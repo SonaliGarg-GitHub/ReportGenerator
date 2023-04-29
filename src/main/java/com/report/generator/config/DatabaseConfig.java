@@ -33,8 +33,6 @@ public class DatabaseConfig {
         dataSource.setTrustServerCertificate(true);
         dataSource.setIntegratedSecurity(true);
         dataSource.setPortNumber(50815);
-
-
         //dataSource.setAuthenticationScheme("NTLM"); //requires login id,pwd.
         //authenticationScheme=NTLM;
         //dataSource.setUser("SONALIGARG\\gargS");
@@ -69,4 +67,6 @@ public class DatabaseConfig {
 
         return transactionManager;
     }
+
+
 }
