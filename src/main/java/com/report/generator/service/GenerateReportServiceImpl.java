@@ -1,25 +1,20 @@
 package com.report.generator.service;
 
-import com.report.generator.utility.Mailer;
+import com.report.generator.utility.AnnovaMailTemplate;
 import com.report.generator.convertor.ExcelConverter;
 import com.report.generator.repository.Procedures;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.compress.utils.Lists;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.yaml.snakeyaml.Yaml;
 
-import javax.mail.Message;
-import javax.mail.internet.AddressException;
-import javax.mail.internet.InternetAddress;
-import java.io.File;
+import javax.mail.MessagingException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -29,11 +24,13 @@ public class GenerateReportServiceImpl implements GenerateReportService {
     @Autowired
     Procedures proc;
     @Autowired
-    Mailer mailer;
+    AnnovaMailTemplate annovaMailTemplate;
     @Autowired
     ExcelConverter excelConverter;
     @Override
-    public void generateWithGrouping(String procName, List<Object> params) {
+    public void generateWithGrouping(String report,List<Object> params) {
+
+        log.info("Fetching Daily reports ");
 
         List<Map<String, Object>> productionReport = proc.fetchProductionReport(params);
         List<Map<String, Object>> utilizationReport = proc.fetchUtilizationReport(params);
@@ -52,79 +49,51 @@ public class GenerateReportServiceImpl implements GenerateReportService {
 
         for (Map.Entry<Object, List<Map<String, Object>>> supervisor : teamProductions.entrySet()) {
             Object team = supervisor.getKey();
+            log.info("Creating {}'s {} Report",team,report);
             List<Map<String, Object>> productions = supervisor.getValue();
             List<Map<String, Object>> utilization = teamUtilization.get(team);
             List<Map<String, Object>> attendance = teamAttendance.get(team);
             List<Map<String, Object>> performance = teamPerformance.get(team);
 
-
-            String filePath = getFilePath(procName+team);
             Workbook workbook = excelConverter.getNewWorkbook();
-            excelConverter.addSheet(workbook,"Team Production", productions);
-            excelConverter.addSheet(workbook,"Team Utilization", utilization);
-            excelConverter.addSheet(workbook,"Team Attendance", attendance);
-            excelConverter.addSheet(workbook,"Team Performance", performance);
+            ExcelConverter.addSheet(workbook,"Team Production", productions);
+            ExcelConverter.addSheet(workbook,"Team Utilization", utilization);
+            ExcelConverter.addSheet(workbook,"Team Attendance", attendance);
+            ExcelConverter.addSheet(workbook,"Team Performance", performance);
+
+            String filePath = getFilePath(report+team);
             excelConverter.convertToExcelFile(workbook, filePath);
-            emailReports(filePath);
+            log.info("Sending {}'s {} Report",team,report);
+
+            Map<String, Object> replacements = new HashMap<>();
+            replacements.put("supervisor", team); //team
+            replacements.put("startDate", params.get(1));
+            replacements.put("endDate", params.get(2));
+            replacements.put("attachment", filePath);
+            triggerMail(report,replacements);
         }
     }
 
-
-    //TODO : add a file Path Absolute Location Value. or do you want these files to be deleted
     private static String getFilePath(String... fileNames) {
-        return String.join("_", fileNames).replaceAll("[^a-zA-Z0-9]+", "") + ".xlsx";
+        return "/reports/"+UUID.randomUUID() + ".xlsx";
     }
 
-    private void emailReports(String filePath) {
-            triggerMail(filePath, getRecipients());
-    }
-
-    //TODO : Update how to get the the FROM Address, Message Body, Message Subject, basically Email Template & recipients addresses.
-    private boolean triggerMail(String filePath, Map<Message.RecipientType, InternetAddress[]> recipients) {
-
-        String emailFrom = "er.sonaligarg@gmail.com";
+    private boolean triggerMail(String report, Map<String, Object> replacements) {
         try {
-            InternetAddress sender = new InternetAddress(emailFrom, "Er Sonali Garg");
-
-            mailer.sendMail(sender, recipients, new File(filePath));
-           log.info(" Mail Sent ");
+            annovaMailTemplate.sendMail(report, replacements);
+            log.info(" {} Sent ", report);
             return true;
         } catch (UnsupportedEncodingException e) {
             log.error("Mail couldn't be sent, please check sender address and credentials. " +
                     " Probably wrong Sender Address {}, please cross-check credentials", e.getMessage());
             throw new RuntimeException("Mail couldn't be sent, please check sender address and credentials.", e);
+        } catch (MessagingException e) {
+            log.error("Mail couldn't be sent, please check sender address and credentials. " +
+                    " Probably wrong Sender Address {}, please cross-check credentials", e.getMessage());
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
 
-    }
-
-    private Map<Message.RecipientType, InternetAddress[]> getRecipients() {
-
-        Map<Message.RecipientType, InternetAddress[]> recipients = new HashMap<>();
-        String[] emailTos = new String[]{"gargs1707@gmail.com"}; // ,"amkrishna4u@gmail.com","raviteja_joshi@outlook.com"
-        String[] emailCcs = new String[]{"gargs1707@outlook.com"};
-
-        InternetAddress[] tos = getInternetAddresses(emailTos);
-        InternetAddress[] ccs = getInternetAddresses(emailCcs);
-
-        recipients.put(Message.RecipientType.TO, tos);
-        recipients.put(Message.RecipientType.CC, ccs);
-
-        return recipients;
-    }
-
-    private InternetAddress[] getInternetAddresses(String[] emails) {
-        int i = 0;
-        InternetAddress[] validEmails = null;
-        if (emails != null) {
-            validEmails = new InternetAddress[emails.length];
-            for (String mail : emails) {
-                try {
-                    validEmails[i++] = new InternetAddress(mail);
-                } catch (AddressException ex) {
-                    log.warn(" Skipping Invalid Email address : {},  {}", mail, ex.getMessage());
-                }
-            }
-        }
-        return validEmails;
     }
 }

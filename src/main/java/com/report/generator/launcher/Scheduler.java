@@ -1,6 +1,9 @@
 package com.report.generator.launcher;
 
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.compress.utils.Lists;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -9,13 +12,18 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+
 /**
- * @author gargS
+ * @author Garg, Sonali
  * Created on 25-04-2023.
  */
 
 @Component
-public class RestApiTask {
+@Slf4j
+public class Scheduler {
 
     @Autowired
     private RestTemplate restTemplate;
@@ -31,8 +39,27 @@ public class RestApiTask {
 
         HttpEntity<String> request = new HttpEntity<>(headers);
 
-        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, request, String.class);
+        restTemplate.exchange(url, HttpMethod.GET, request, String.class);
         // Handle response here
+    }
+
+    private List<Object> getParams() {
+
+        Calendar calendar = Calendar.getInstance();
+        Date startDate = calendar.getTime();
+        calendar.add(Calendar.DATE, -1);
+        Date endDate = calendar.getTime();
+        int dataTableId = 5;
+
+        log.info("start date= " + startDate);
+        log.info("end date = " +endDate);
+        log.info("DataTableId = " );
+
+        List<Object> params = Lists.newArrayList();
+        params.add(dataTableId);
+        params.add(startDate);
+        params.add(endDate);
+        return params;
     }
 }
 

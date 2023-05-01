@@ -60,7 +60,7 @@ public enum CellStyleEnum {
 
     public abstract CellStyle getStyle(Workbook workbook);
 
-    private static Map<String, CellStyle> styles = new HashMap<>();
+    private static final Map<String, CellStyle> styles = new HashMap<>();
 
     static {
         // Initialize the styles map

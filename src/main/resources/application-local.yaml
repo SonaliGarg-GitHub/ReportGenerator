@@ -1,0 +1,62 @@
+
+cron : 0 */1 * * * ?
+
+auth :
+  user: &sender er.sonaligarg@gmail.com
+  pwd: bptaazcyhzdukilp
+
+mail:
+  smtp:
+    host: smtp.gmail.com
+    port: 587
+    auth: true
+    starttls:
+      enable: true
+
+email:
+  templates:
+    daily_reports:
+      report_name : &report_name DAILY REPORTS
+      from: *sender
+      sender_name: &sender_name_value MitraBIteam
+      support_team: &support_team_value MitraBIteam@annovasolutions.com
+      to: "{{supervisor}}"
+      cc:
+        - gargs1707@gmail.com
+        - gargs1707@outlook.com
+        - er.sonaligarg@gmail.com
+      subject: DAILY PERFORMANCE REPORT - FROM {{startDate}} TO {{endDate}}
+      body: |
+        <html>
+             <head>
+               <meta charset="UTF-8">
+               <style>
+                 body {
+                   font-family: Calibri, sans-serif;
+                   font-size: 11pt;
+                   line-height: 1.5;
+                   color: #333;
+                 }
+               </style>
+             </head>
+             <body>
+               <p>Dear Team Supervisor ({{supervisor}}),</p>
+               <p>Attached please find daily performance report of your team members for above-mentioned duration. The attached document is Excel file.</p>
+               <p>File includes:</p>
+               <ul>
+                 <li>Productivity details</li>
+                 <li>Utilization details</li>
+                 <li>Attendance details</li>
+                 <li>Process Performance Summary</li>
+               </ul>
+               <p>This information should be distributed to all team members on daily basis and coached if need be. If you continue to see non-performance or non-adherence please escalation to your manager and seek his/her guidance on next steps.</p>
+               <p>If you have any questions regarding details published, please write to MitraBIteam@annovasolutions.com.</p>
+               <p>Sincerely,
+               <br>MitraBIteam</p>
+             </body>
+           </html>
+
+      attachment:
+        file: "/path/to/file/"
+        filename:  "DAILY REPORTS_{{startDate}}_{{endDate}}_{{supervisor}}.xls"
+
