@@ -4,6 +4,6 @@ import java.util.List;
 
 public interface GenerateReportService {
 
-    void generateWithGrouping(String procName, List<Object> params);
+    void generateWithGrouping(String report, List<Object> params);
 
 }

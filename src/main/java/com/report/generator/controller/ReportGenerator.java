@@ -20,13 +20,13 @@ public class ReportGenerator {
     GenerateReportService reportService;
 
     @GetMapping("/generateReport")
-    public void generateReport(@RequestParam(value = "proc") String procName ) {
-         reportService.generateWithGrouping(procName,getParams(5));
+    public void generateReport(@RequestParam(value = "report") String report ) {
+         reportService.generateWithGrouping(report,getParams(5)); //dataTableId=5;
     }
 
     @GetMapping("/generateAdhoc")
-    public void generateAdhoc(@RequestParam(value = "proc") String procName, @RequestParam("params") List<Object> params ) {
-        reportService.generateWithGrouping(procName,params);
+    public void generateAdhoc(@RequestParam(value = "report") String report, @RequestParam("params") List<Object> params ) {
+        reportService.generateWithGrouping(report,params);
     }
 
     List<Object> getParams(int dataTableId){
@@ -36,8 +36,8 @@ public class ReportGenerator {
         Date endDate = calendar.getTime();
         calendar.add(Calendar.YEAR, -1);
         Date startDate = calendar.getTime();
-        list.add(startDate);
-        list.add(endDate);
+        list.add(startDate); //yesterday
+        list.add(endDate);   //today
         return list;
 
     }
