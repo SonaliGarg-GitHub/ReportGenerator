@@ -26,12 +26,7 @@ public class ReportGenerator {
 
     @GetMapping("/generateAdhoc")
     public void generateAdhoc(@RequestParam(value = "proc") String procName, @RequestParam("params") List<Object> params ) {
-        return;
-    }
-
-    @GetMapping("hello")
-    public String hello(){
-        return "hello";
+        reportService.generateWithGrouping(procName,params);
     }
 
     List<Object> getParams(int dataTableId){
